@@ -33,10 +33,12 @@
            prop="prop"
            label="操作" >
            <template slot-scope="{row,$index}">
-            <hint-button type="success" icon="el-icon-plus" size="mini" title="添加SKu" ></hint-button>
+            <hint-button type="success" icon="el-icon-plus" size="mini" title="添加SKu" @click="addSku(row)"></hint-button>
             <hint-button type="warning" icon="el-icon-edit" size="mini" title="修改Spu" @click="updateSpu(row)"></hint-button>
             <hint-button type="info" icon="el-icon-info" size="mini" title="查看当前Spu全部sku列表"></hint-button>
-            <hint-button type="danger" icon="el-icon-delete" size="mini" title="删除Spu" ></hint-button>
+            <el-popconfirm title="确定删除吗" @onComfirm="deleteSpu(row)">
+              <hint-button type="danger" icon="el-icon-delete" size="mini" title="删除Spu" slot="reference"></hint-button>
+            </el-popconfirm>
            </template>
          </el-table-column>
        </el-table> 
@@ -53,7 +55,7 @@
     </el-pagination>
         </div>
         <SpuForm v-show="scene==1" @changeScene="changeScene" ref="spu"></SpuForm>
-        <SkuForm v-show="scene==2"></SkuForm>
+        <SkuForm v-show="scene==2" ref="sku" @changeScenes="changeScenes"></SkuForm>
     </el-card>
   
   </div>
@@ -85,7 +87,7 @@ data(){
 methods:{
   getCategoryId({categoryId,level}){ 
     if(level==1){
-      this.category1Id=categoryId
+      this.category1Id=categoryId 
       this.category2Id='' 
       this.category3Id=''
     }else if(level==2) {
@@ -96,7 +98,8 @@ methods:{
       this.getSupList()
   }
 },
- async getSupList(){
+ async getSupList(pages=1){
+  this.page=pages 
   const {page,limit,category3Id} =this
 let result =  await this.$API.spu.reqSpuList(page,limit,category3Id)
 // console.log(result);
@@ -114,18 +117,37 @@ handleSizeChange(limit){
    this.getSupList()
 },
 addSpu(){
-  this.scene=1
+  this.scene=1;
+  this.$refs.spu.addSpuData(this.category3Id)
 },
 updateSpu(row) {
   this.scene=1;
   this.$refs.spu.initSpuData(row)
 
 },
-changeScene(scene){
+changeScene({scene,flag}){
   this.scene=scene
+  if(flag=='修改'){
   this.getSupList(this.page)
+  }else{
+    this.getSupList()
+  }
+},
+ async deleteSpu(row){
+  let result = await this.$API.spu.reqDeleteSpu(row.id)
+  if(result.code==200){
+    this.$message({type:'success',message:'删除成功'})
+    this.getSpulist(this.record.length>1?this.page:this.page-1)
+  }
+},
+addSku(row){
+this.scene=2
+this.$refs.sku.getData(this.category1Id,this.category2Id,row)
+},
+//skuform通知父组件修改场景
+changeScenes(scene){
+this.scene=scene
 }
-
 },
 components:{
   SpuForm,

@@ -90,7 +90,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="addOrUpdateSpu">保存</el-button>
-        <el-button @click="$emit('changeScene', 0)">取消</el-button>
+        <el-button @click="$emit('changeScene', {scene:0,flag:''})">取消</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -146,7 +146,7 @@ export default {
         });
         this.SpuImageList = listArr;
       }
-
+     //获取平台全部销售属性
       let SaleResult = await this.$API.spu.reqBaseSaleAttrList();
       if (SaleResult.code == 200) {   
         this.SaleAttrList =SaleResult.data;
@@ -192,9 +192,25 @@ export default {
       let result =  await this.$API.spu.reqAddOrUpdateSpu(this.spu)
       if(result.code==200){
         this.$message({type:'success',message:'修改成功'})
-        this.$emit('changeScene',0)
+        this.$emit('changeScene',{scene:0,flag:this.spu.id?'修改':'添加'})
       }
-     
+      Object.assign(this._data,this.$options.data())
+    },
+    //点击添加SPU按钮的时候，发请求的函数
+    async addSpuData(category3Id){
+      //this.$options可以获取配置对象，配置对象的data函数执行，返回的响应式数据为空的（清除数据）
+      Object.assign(this._data,this.$options.data())
+      //添加spu的时候收集3级分类id
+      this.spu.category3Id=category3Id
+      let TradeMarkResult = await this.$API.spu.reqTradeMarkList();
+      if (TradeMarkResult.code == 200) {
+      this.tradeMarkList = TradeMarkResult.data;
+      }
+      //获取平台全部销售属性
+      let SaleResult = await this.$API.spu.reqBaseSaleAttrList();
+      if (SaleResult.code == 200) {   
+        this.SaleAttrList =SaleResult.data;
+      }
     }
   },
   computed:{
